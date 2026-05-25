@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบตรวจงาน QR Code</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --p:#2563eb;--p2:#1d4ed8;--p-light:#eff6ff;
+  --g:#22c55e;--a:#f59e0b;--r:#ef4444;--cyan:#0891b2;
+  --bg:#f1f5f9;--surface:#ffffff;
+  --border:#e2e8f0;--t1:#0f172a;--t2:#475569;--t3:#94a3b8;
+  --radius:12px;--shadow:0 2px 8px rgba(0,0,0,.08);
+  --shadow-md:0 4px 16px rgba(0,0,0,.12);
+}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--t1);font-size:.9rem;min-height:100vh}
+
+/* NAV */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.nav-logo{font-weight:800;font-size:1rem;color:var(--p);display:flex;align-items:center;gap:8px}
+.nav-logo i{font-size:22px}
+.nav-tabs{display:flex;gap:2px;margin-left:auto}
+.nav-tab{padding:6px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--t2);border:none;background:none;font-family:'Sarabun';transition:.15s}
+.nav-tab.active{background:var(--p-light);color:var(--p)}
+.nav-tab:hover:not(.active){background:var(--bg)}
+
+/* LAYOUT */
+.container{max-width:900px;margin:0 auto;padding:20px}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:16px}
+.card-body{padding:20px}
+.card-title{font-size:.95rem;font-weight:700;color:var(--t1);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title i{color:var(--p)}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border:none;border-radius:9px;cursor:pointer;font-family:'Sarabun';font-size:.88rem;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn:hover{filter:brightness(.93);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn-p{background:var(--p);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.25)}
+.btn-g{background:var(--g);color:#fff}
+.btn-r{background:var(--r);color:#fff}
+.btn-a{background:var(--a);color:#fff}
+.btn-ghost{background:var(--bg);color:var(--t2);border:1px solid var(--border)}
+.btn-sm{padding:6px 12px;font-size:.78rem;border-radius:7px}
+.btn-full{width:100%;justify-content:center;padding:13px}
+
+/* FORM */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.75rem;font-weight:700;color:var(--t2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+input:not([type=color]):not([type=file]),select,textarea{
+  padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;
+  width:100%;font-family:'Sarabun';font-size:.88rem;outline:none;
+  background:var(--surface);color:var(--t1);transition:.15s
+}
+input:focus,select:focus,textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* BADGE */
+.badge{padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.badge-ok{background:#dcfce7;color:#15803d}
+.badge-err{background:#fee2e2;color:#b91c1c}
+.badge-blue{background:#eff6ff;color:#2563eb}
+.badge-gray{background:var(--bg);color:var(--t2)}
+.badge-a{background:#fef3c7;color:#b45309}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 12px;background:var(--bg);color:var(--t3);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--bg);font-size:.85rem;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8fafc}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.blue::before{background:var(--p)}
+.stat-card.green::before{background:var(--g)}
+.stat-card.red::before{background:var(--r)}
+.stat-card.amber::before{background:var(--a)}
+.stat-label{font-size:.72rem;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px}
+.stat-num{font-size:1.9rem;font-weight:800;line-height:1}
+.stat-num.blue{color:var(--p)}
+.stat-num.green{color:var(--g)}
+.stat-num.red{color:var(--r)}
+.stat-num.amber{color:var(--a)}
+
+/* CAM / SCAN */
+.cam-wrap{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;max-width:420px;margin:0 auto}
+.cam-wrap video{width:100%;display:block}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-box{width:220px;height:220px;border:3px solid #fff;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.5);position:relative;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{border-color:#fff}50%{border-color:var(--p)}}
+.scan-line{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--p),transparent);animation:scan 2s infinite}
+@keyframes scan{0%{top:0}100%{top:calc(100% - 3px)}}
+.scan-corner{position:absolute;width:20px;height:20px;border-color:var(--p);border-style:solid}
+.scan-corner.tl{top:-3px;left:-3px;border-width:4px 0 0 4px;border-radius:6px 0 0 0}
+.scan-corner.tr{top:-3px;right:-3px;border-width:4px 4px 0 0;border-radius:0 6px 0 0}
+.scan-corner.bl{bottom:-3px;left:-3px;border-width:0 0 4px 4px;border-radius:0 0 0 6px}
+.scan-corner.br{bottom:-3px;right:-3px;border-width:0 4px 4px 0;border-radius:0 0 6px 0}
+
+/* RESULT BOX */
+.result-box{padding:16px;border-radius:var(--radius);margin-top:14px;text-align:center;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.result-box.ok{background:#f0fdf4;border:2px solid #86efac}
+.result-box.err{background:#fef2f2;border:2px solid #fca5a5}
+.result-box.idle{background:var(--bg);border:2px dashed var(--border)}
+.result-name{font-size:1.3rem;font-weight:800;color:var(--t1)}
+.result-sub{font-size:.82rem;color:var(--t2)}
+
+/* QR PRINT */
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.qr-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;cursor:pointer;transition:.15s}
+.qr-item:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.qr-item .qr-code{margin:0 auto 8px}
+.qr-name{font-size:.78rem;font-weight:700;color:var(--t1)}
+.qr-id{font-size:.7rem;color:var(--t3)}
+.qr-cls{font-size:.7rem;color:var(--p);font-weight:600}
+
+/* SETUP */
+#setup{position:fixed;inset:0;background:linear-gradient(135deg,#eff6ff,#f0fdf4);display:flex;align-items:center;justify-content:center;padding:20px;z-index:500}
+.setup-box{background:#fff;border-radius:20px;padding:36px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.12);border:1px solid var(--border)}
+.setup-box h2{font-size:1.6rem;font-weight:800;color:var(--p);margin-bottom:6px}
+
+/* TOAST */
+.toast{position:fixed;top:20px;right:20px;padding:12px 16px;border-radius:10px;font-weight:600;z-index:9999;max-width:320px;box-shadow:var(--shadow-md);animation:slideIn .25s ease;font-size:.85rem}
+@keyframes slideIn{from{transform:translateX(120%)}to{transform:translateX(0)}}
+.toast-ok{background:#f0fdf4;color:#15803d;border-left:3px solid var(--g)}
+.toast-err{background:#fef2f2;color:#991b1b;border-left:3px solid var(--r)}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:rgba(255,255,255,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(4px)}
+.spin{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--p);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MOBILE */
+@media(max-width:600px){
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .nav-tab span{display:none}
+  .container{padding:14px}
+  .qr-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* LOGIN MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-box{background:#fff;border-radius:20px;padding:32px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-box h3{font-size:1.1rem;font-weight:700;margin-bottom:4px}
+.modal-box p{color:var(--t3);margin-bottom:18px;font-size:.85rem}
+
+/* USER CHIP */
+.user-chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;background:var(--bg);border-radius:20px;cursor:pointer;transition:.15s}
+.user-chip:hover{background:var(--border)}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--p-light);color:var(--p);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700}
+.user-name{font-size:.8rem;font-weight:600;color:var(--t1)}
+
+/* PRINT */
+@media print{
+  .nav,.no-print{display:none!important}
+  .qr-item{break-inside:avoid;border:1px solid #000}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup">
+  <div class="setup-box">
+    <h2>📝 ระบบตรวจงาน QR</h2>
+    <p style="color:var(--t2);margin-bottom:22px">กรอก Apps Script URL เพื่อเริ่มใช้งาน</p>
+    <div class="field"><label>Apps Script URL</label><input id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+    <div class="field"><label>ชื่อโรงเรียน</label><input id="cfg-name" placeholder="Smart School"></div>
+    <button class="btn btn-p btn-full" onclick="startApp()"><i class="ti ti-rocket"></i>เริ่มใช้งาน</button>
+    <p style="font-size:.75rem;color:var(--t3);text-align:center;margin-top:10px">บันทึกในเครื่องนี้</p>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div id="login-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h3><i class="ti ti-lock" style="color:var(--p)"></i> เข้าสู่ระบบ</h3>
+    <p>ใช้ Username/Password เดียวกับหน้าเช็คชื่อ</p>
+    <div class="field"><label>Username</label><input id="l-user" placeholder="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="field"><label>Password</label><input id="l-pass" type="password" placeholder="password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <p id="l-err" style="color:var(--r);font-size:.82rem;min-height:16px;margin-bottom:8px"></p>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p" style="flex:1;justify-content:center" onclick="doLogin()"><i class="ti ti-login"></i>เข้าสู่ระบบ</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('login-modal').style.display='none'">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADER -->
+<div id="loader" style="display:none">
+  <div class="spin"></div>
+  <p style="margin-top:12px;font-size:.85rem;color:var(--t2)" id="load-txt">กำลังโหลด...</p>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="main-nav" style="display:none">
+  <div class="nav-logo"><i class="ti ti-qrcode"></i><span id="school-name">ระบบตรวจงาน</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="goPage('scan',this)" id="tab-scan"><i class="ti ti-scan"></i> <span>สแกน</span></button>
+    <button class="nav-tab" onclick="goPage('assignments',this)" id="tab-assignments"><i class="ti ti-notebook"></i> <span>งาน</span></button>
+    <button class="nav-tab" onclick="goPage('qrgen',this)" id="tab-qrgen"><i class="ti ti-qrcode"></i> <span>QR</span></button>
+    <button class="nav-tab" onclick="goPage('report',this)" id="tab-report"><i class="ti ti-chart-bar"></i> <span>รายงาน</span></button>
+    <div class="user-chip" id="user-chip" onclick="handleUserClick()" style="margin-left:8px">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <span class="user-name" id="user-name">เข้าสู่ระบบ</span>
+    </div>
+  </div>
+</nav>
+
+<div class="container" id="main-container" style="display:none">
+
+  <!-- ══ PAGE: SCAN ══ -->
+  <div id="scan" class="page active">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><i class="ti ti-scan"></i>เลือกงานที่ต้องการตรวจ</div>
+        <div class="grid-2">
+          <div class="field" style="margin:0">
+            <label>งาน / Assignment</label>
+            <select id="scan-assign">
+              <option value="">— เลือกงาน —</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0">
+            <label>คะแนนเต็ม (ถ้ามี)</label>
+            <input type="number" id="scan-maxscore" placeholder="เช่น 10" min="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><i class="ti ti-camera"></i>สแกน QR Code นักเรียน</div>
+        <div class="cam-wrap">
+          <video id="scan-video" autoplay playsinline muted></video>
+          <div class="scan-overlay">
+            <div class="scan-box">
+              <div class="scan-line"></div>
+              <div class="scan-corner tl"></div>
+              <div class="scan-corner tr"></div>
+              <div class="scan-corner bl"></div>
+              <div class="scan-corner br"></div>
+            </div>
+          </div>
+          <canvas id="scan-canvas" style="display:none"></canvas>
+        </div>
+
+        <div class="result-box idle" id="result-box">
+          <i class="ti ti-qrcode" style="font-size:28px;color:var(--t3)"></i>
+          <div style="color:var(--t3);font-size:.88rem">เล็งกล้องไปที่ QR Code ของนักเรียน</div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-p" onclick="startScan()" id="btn-start-scan"><i class="ti ti-camera"></i>เปิดกล้อง</button>
+          <button class="btn btn-ghost" onclick="stopScan()" id="btn-stop-scan" style="display:none"><i class="ti ti-camera-off"></i>ปิดกล้อง</button>
+          <div class="field" style="margin:0;flex:1;min-width:200px">
+            <input id="manual-id" placeholder="หรือกรอกรหัสนักเรียนด้วยมือ..." onkeydown="if(event.key==='Enter')manualSubmit()">
+          </div>
+          <button class="btn btn-a" onclick="manualSubmit()"><i class="ti ti-check"></i>บันทึก</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ประวัติการสแกนวันนี้ -->
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><i class="ti ti-list-check"></i>สแกนแล้ววันนี้ <span id="scan-count" class="badge badge-blue">0</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>เวลา</th><th>รหัส</th><th>ชื่อ</th><th>ห้อง</th><th>คะแนน</th><th>งาน</th></tr></thead>
+            <tbody id="scan-history"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: ASSIGNMENTS ══ -->
+  <div id="assignments" class="page">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><i class="ti ti-plus"></i>สร้างงานใหม่</div>
+        <div class="grid-2">
+          <div class="field" style="margin:0"><label>ชื่องาน</label><input id="a-title" placeholder="เช่น แบบฝึกหัดบทที่ 3"></div>
+          <div class="field" style="margin:0"><label>วิชา</label><input id="a-subject" placeholder="เช่น คณิตศาสตร์"></div>
+        </div>
+        <div class="grid-3" style="margin-top:12px">
+          <div class="field" style="margin:0"><label>ห้องเรียน</label><input id="a-cls" placeholder="เช่น 1/1 หรือ ทุกห้อง"></div>
+          <div class="field" style="margin:0"><label>กำหนดส่ง</label><input type="date" id="a-due"></div>
+          <div class="field" style="margin:0"><label>คะแนนเต็ม</label><input type="number" id="a-maxscore" placeholder="10" min="0"></div>
+        </div>
+        <div class="field" style="margin-top:12px"><label>รายละเอียด (ไม่บังคับ)</label><textarea id="a-desc" rows="2" placeholder="คำอธิบายงาน..."></textarea></div>
+        <button class="btn btn-p" onclick="createAssignment()"><i class="ti ti-device-floppy"></i>บันทึกงาน</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><i class="ti ti-list"></i>รายการงานทั้งหมด</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ชื่องาน</th><th>วิชา</th><th>ห้อง</th><th>กำหนดส่ง</th><th>คะแนนเต็ม</th><th>ส่งแล้ว</th><th></th></tr></thead>
+            <tbody id="tb-assignments"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: QR GEN ══ -->
+  <div id="qrgen" class="page">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><i class="ti ti-qrcode"></i>สร้าง QR Code ประจำตัวนักเรียน</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+          <select id="qr-cls-filter" onchange="renderQRPage()" style="width:auto;min-width:140px">
+            <option value="">— ทุกห้อง —</option>
+          </select>
+          <input type="text" id="qr-search" placeholder="ค้นหาชื่อ/รหัส..." style="width:auto;flex:1;min-width:180px" oninput="renderQRPage()">
+          <button class="btn btn-p btn-sm no-print" onclick="window.print()"><i class="ti ti-printer"></i>พิมพ์ทั้งหมด</button>
+        </div>
+        <div id="qr-grid" class="qr-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: REPORT ══ -->
+  <div id="report" class="page">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><i class="ti ti-chart-bar"></i>รายงานการส่งงาน</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+          <select id="rp-assign" onchange="renderReportPage()" style="min-width:200px">
+            <option value="">— เลือกงาน —</option>
+          </select>
+          <select id="rp-cls" onchange="renderReportPage()" style="width:auto;min-width:130px">
+            <option value="">ทุกห้อง</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="renderReportPage()"><i class="ti ti-refresh"></i>โหลด</button>
+          <button class="btn btn-sm no-print" style="background:#7c3aed;color:#fff" onclick="window.print()"><i class="ti ti-printer"></i>พิมพ์</button>
+        </div>
+
+        <div class="stat-grid" id="rp-stats">
+          <div class="stat-card blue"><div class="stat-label">นักเรียนทั้งหมด</div><div class="stat-num blue" id="rp-total">0</div></div>
+          <div class="stat-card green"><div class="stat-label">ส่งแล้ว</div><div class="stat-num green" id="rp-done">0</div></div>
+          <div class="stat-card red"><div class="stat-label">ยังไม่ส่ง</div><div class="stat-num red" id="rp-missing">0</div></div>
+          <div class="stat-card amber"><div class="stat-label">% ส่งงาน</div><div class="stat-num amber" id="rp-pct">0%</div></div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>รหัส</th><th>ชื่อ</th><th>ห้อง</th><th>สถานะ</th><th>คะแนน</th><th>เวลาส่ง</th></tr></thead>
+            <tbody id="tb-report"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+var CFG={}, STUDENTS=[], ASSIGNMENTS=[], SUBMISSIONS=[], TEACHERS={};
+var scanStream=null, scanInterval=null, lastScanned='', lastScannedTime=0;
+
+// ═══════════════════════════════════════
+// SETUP / BOOT
+// ═══════════════════════════════════════
+function startApp(){
+  var url=document.getElementById('cfg-url').value.trim();
+  var name=document.getElementById('cfg-name').value.trim()||'Smart School';
+  if(!url||!url.includes('script.google.com')){toast('URL ไม่ถูกต้อง',true);return;}
+  CFG={url,schoolName:name};
+  localStorage.setItem('qr_cfg',JSON.stringify(CFG));
+  initApp();
+}
+
+async function initApp(){
+  document.getElementById('setup').style.display='none';
+  document.getElementById('main-nav').style.display='flex';
+  document.getElementById('main-container').style.display='block';
+  document.getElementById('school-name').innerText=CFG.schoolName||'ระบบตรวจงาน';
+  // ตั้งค่าวันที่กำหนดส่งเป็นวันนี้
+  var today=new Date().toISOString().substring(0,10);
+  document.getElementById('a-due').value=today;
+  load('โหลดข้อมูล...');
+  await loadAll();
+  load('');
+}
+
+// ═══════════════════════════════════════
+// API
+// ═══════════════════════════════════════
+async function api(body){
+  var params=new URLSearchParams();
+  params.set('action', body.action);
+  params.set('sheet',  body.sheet||'');
+  if(body.values  !== undefined) params.set('values',  body.values);
+  if(body.range   !== undefined) params.set('range',   body.range);
+  var r=await fetch(CFG.url+'?'+params.toString(),{redirect:'follow'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  var j=await r.json();
+  if(!j.success) throw new Error(j.error||'ไม่สำเร็จ');
+  return j;
+}
+
+// ═══════════════════════════════════════
+// LOAD ALL DATA
+// ═══════════════════════════════════════
+async function loadAll(){
+  // โหลดนักเรียน (จำเป็น)
+  try{
+    var r1=await api({action:"get",sheet:"Students"});
+    STUDENTS=(r1.values||[]).slice(1).map(r=>({
+      id:String(r[0]||""),name:String(r[1]||""),cls:String(r[2]||""),
+      desc:String(r[3]||""),photo:String(r[4]||"")
+    })).filter(s=>s.id);
+  }catch(e){toast("โหลดนักเรียนไม่สำเร็จ: "+e.message,true);return;}
+
+  // โหลด Assignments
+  try{
+    var r2=await api({action:"get",sheet:"Assignments"});
+    ASSIGNMENTS=(r2.values||[]).slice(1).map((r,i)=>({
+      id:String(r[0]||""),title:String(r[1]||""),subject:String(r[2]||""),
+      due:String(r[3]||""),cls:String(r[4]||""),maxScore:Number(r[5]||0),
+      desc:String(r[6]||""),rowNum:i+2
+    })).filter(a=>a.id);
+  }catch(e){
+    ASSIGNMENTS=[];
+    toast("ยังไม่มี Sheet Assignments — รัน setupAssignmentSheets() ใน Apps Script ก่อน",true);
+  }
+
+  // โหลด Submissions
+  try{
+    var r3=await api({action:"get",sheet:"Submissions"});
+    SUBMISSIONS=(r3.values||[]).slice(1).map((r,i)=>({
+      ts:String(r[0]||""),assignId:String(r[1]||""),studentId:String(r[2]||""),
+      name:String(r[3]||""),cls:String(r[4]||""),score:String(r[5]||""),
+      note:String(r[6]||""),rowNum:i+2
+    })).filter(s=>s.assignId);
+  }catch(e){ SUBMISSIONS=[]; }
+
+  // โหลด Teachers สำหรับระบบ role
+  try{
+    var r4=await api({action:'get',sheet:'Teachers'});
+    TEACHERS={};
+    (r4.values||[]).slice(1).forEach(row=>{
+      var cls=String(row[0]||'').trim();
+      var name=String(row[1]||'').trim();
+      if(cls&&name) TEACHERS[cls]={name,position:String(row[2]||'ครูประจำชั้น'),grade:String(row[3]||'')};
+    });
+  }catch(e){ TEACHERS={}; }
+
+  fillSelectors();
+  renderAssignments();
+  renderQRPage();
+  renderScanHistory();
+  applyRoleRestrictions();
+}
+
+function fillSelectors(){
+  var classes=[...new Set(STUDENTS.map(s=>s.cls).filter(Boolean))].sort();
+
+  // QR filter
+  var qrCls=document.getElementById('qr-cls-filter');
+  var cur=qrCls.value; qrCls.innerHTML='<option value="">— ทุกห้อง —</option>';
+  classes.forEach(c=>{var o=new Option('ห้อง '+c,c);if(c===cur)o.selected=true;qrCls.add(o);});
+
+  // Report cls
+  var rpCls=document.getElementById('rp-cls');
+  rpCls.innerHTML='<option value="">ทุกห้อง</option>';
+  classes.forEach(c=>rpCls.add(new Option('ห้อง '+c,c)));
+
+  // Assignment selectors
+  ['scan-assign','rp-assign'].forEach(id=>{
+    var sel=document.getElementById(id);
+    var curVal=sel.value;
+    sel.innerHTML='<option value="">— เลือกงาน —</option>';
+    ASSIGNMENTS.forEach(a=>{
+      var o=new Option(`${a.title} (${a.subject})`,a.id);
+      if(a.id===curVal)o.selected=true;
+      sel.add(o);
+    });
+  });
+}
+
+// ═══════════════════════════════════════
+// PAGE NAVIGATION
+// ═══════════════════════════════════════
+function goPage(p,btn){
+  // ล็อกหน้า assignments เฉพาะคนที่ login แล้ว
+  if(p==='assignments'&&!CURRENT_USER){
+    showLogin();
+    return;
+  }
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active'));
+  document.getElementById(p).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(p!=='scan') stopScan();
+  if(p==='qrgen') renderQRPage();
+  if(p==='report') renderReportPage();
+  if(p==='assignments') renderAssignments();
+}
+
+// ═══════════════════════════════════════
+// ASSIGNMENTS CRUD
+// ═══════════════════════════════════════
+async function createAssignment(){
+  var title=document.getElementById('a-title').value.trim();
+  var subject=document.getElementById('a-subject').value.trim();
+  var cls=document.getElementById('a-cls').value.trim();
+  var due=document.getElementById('a-due').value;
+  var maxScore=document.getElementById('a-maxscore').value||'0';
+  var desc=document.getElementById('a-desc').value.trim();
+  if(!title){toast('กรอกชื่องานก่อน',true);return;}
+  var id='A'+Date.now();
+  load('บันทึก...');
+  try{
+    await api({action:'append',sheet:'Assignments',values:JSON.stringify([id,title,subject,due,cls,maxScore,desc])});
+    ASSIGNMENTS.push({id,title,subject,due,cls,maxScore:Number(maxScore),desc});
+    ['a-title','a-subject','a-cls','a-maxscore','a-desc'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('a-due').value=new Date().toISOString().substring(0,10);
+    fillSelectors(); renderAssignments();
+    toast('สร้างงาน "'+title+'" เรียบร้อย');
+  }catch(e){toast('Error: '+e.message,true);}
+  load('');
+}
+
+function renderAssignments(){
+  var role=CURRENT_USER?CURRENT_USER.role:'';
+  var isAdmin=(role==='admin'), isHead=(role==='head'), isTeacher=(role==='teacher');
+  var myClass=getMyClass();
+
+  var html='';
+  if(!ASSIGNMENTS.length){
+    html='<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:24px">ยังไม่มีงาน กดสร้างงานด้านบน</td></tr>';
+  } else {
+    // กรองงานตาม role
+    var visible=ASSIGNMENTS.filter(a=>{
+      if(isAdmin||isHead) return true;
+      if(isTeacher&&myClass) return !a.cls||a.cls===myClass;
+      return false;
+    });
+    visible.slice().reverse().forEach(a=>{
+      var submitted=SUBMISSIONS.filter(s=>s.assignId===a.id).length;
+      var total=a.cls?STUDENTS.filter(s=>s.cls===a.cls).length:STUDENTS.length;
+      var today=new Date().toISOString().substring(0,10);
+      var overdue=a.due&&a.due<today;
+      html+=`<tr>
+        <td><strong>${a.title}</strong>${a.desc?'<br><span style="color:var(--t3);font-size:.78rem">'+a.desc+'</span>':''}</td>
+        <td><span class="badge badge-blue">${a.subject||'—'}</span></td>
+        <td>${a.cls||'ทุกห้อง'}</td>
+        <td style="color:${overdue?'var(--r)':'var(--t2)'}">${a.due||'—'}</td>
+        <td style="text-align:center">${a.maxScore||'—'}</td>
+        <td><span class="badge ${submitted>=total&&total>0?'badge-ok':'badge-gray'}">${submitted}/${total}</span></td>
+        <td><button class="btn btn-r btn-sm" onclick="deleteAssignment('${a.id}',${a.rowNum})"><i class="ti ti-trash"></i></button></td>
+      </tr>`;
+    });
+  }
+  document.getElementById('tb-assignments').innerHTML=html;
+}
+
+async function deleteAssignment(id,rowNum){
+  if(!confirm('ลบงานนี้?'))return;
+  load('ลบ...');
+  try{
+    await api({action:'update',sheet:'Assignments',range:`A${rowNum}:G${rowNum}`,values:JSON.stringify(['','','','','','',''])});
+    ASSIGNMENTS=ASSIGNMENTS.filter(a=>a.id!==id);
+    fillSelectors(); renderAssignments();
+    toast('ลบงานเรียบร้อย');
+  }catch(e){toast('Error: '+e.message,true);}
+  load('');
+}
+
+// ═══════════════════════════════════════
+// QR CODE GENERATION
+// ═══════════════════════════════════════
+function renderQRPage(){
+  var cls=(document.getElementById('qr-cls-filter').value||'').trim();
+  var search=(document.getElementById('qr-search').value||'').toLowerCase().trim();
+  var filtered=STUDENTS.filter(s=>
+    (!cls||s.cls===cls)&&
+    (!search||s.name.toLowerCase().includes(search)||s.id.includes(search))
+  );
+  var grid=document.getElementById('qr-grid');
+  grid.innerHTML='';
+  filtered.forEach(s=>{
+    var div=document.createElement('div');
+    div.className='qr-item';
+    div.innerHTML=`<div class="qr-code" id="qr-${s.id}"></div>
+      <div class="qr-name">${s.name}</div>
+      <div class="qr-id">รหัส: ${s.id}</div>
+      <div class="qr-cls">ห้อง ${s.cls}</div>`;
+    grid.appendChild(div);
+    // สร้าง QR Code
+    setTimeout(()=>{
+      try{
+        new QRCode(document.getElementById('qr-'+s.id),{
+          text: s.id,
+          width:120,height:120,
+          colorDark:'#0f172a',colorLight:'#ffffff',
+          correctLevel:QRCode.CorrectLevel.M
+        });
+      }catch(e){}
+    },50);
+  });
+  if(!filtered.length) grid.innerHTML='<p style="color:var(--t3);padding:20px">ไม่พบนักเรียน</p>';
+}
+
+// ═══════════════════════════════════════
+// SCAN QR
+// ═══════════════════════════════════════
+function startScan(){
+  var video=document.getElementById('scan-video');
+  var canvas=document.getElementById('scan-canvas');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280}}})
+    .then(stream=>{
+      scanStream=stream;
+      video.srcObject=stream;
+      video.play();
+      document.getElementById('btn-start-scan').style.display='none';
+      document.getElementById('btn-stop-scan').style.display='';
+      scanInterval=setInterval(()=>scanFrame(video,canvas),200);
+    })
+    .catch(e=>toast('กล้องไม่ทำงาน: '+e.message,true));
+}
+
+function stopScan(){
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
+  if(scanInterval){clearInterval(scanInterval);scanInterval=null;}
+  document.getElementById('btn-start-scan').style.display='';
+  document.getElementById('btn-stop-scan').style.display='none';
+}
+
+function scanFrame(video,canvas){
+  if(video.readyState<2) return;
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  var ctx=canvas.getContext('2d');
+  ctx.drawImage(video,0,0);
+  var imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+  var code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:'dontInvert'});
+  if(code&&code.data){
+    var now=Date.now();
+    if(code.data===lastScanned&&now-lastScannedTime<3000) return;
+    lastScanned=code.data;
+    lastScannedTime=now;
+    processQR(code.data);
+  }
+}
+
+async function processQR(qrData){
+  var assignId=document.getElementById('scan-assign').value;
+  if(!assignId){
+    showResult(false,'⚠️ เลือกงานก่อน','กรุณาเลือกงานที่ต้องการตรวจด้านบน');
+    return;
+  }
+  var student=STUDENTS.find(s=>s.id===qrData.trim());
+  if(!student){
+    showResult(false,'❌ ไม่พบนักเรียน','รหัส: '+qrData);
+    return;
+  }
+  // เช็คว่าส่งแล้วยัง
+  var already=SUBMISSIONS.find(s=>s.assignId===assignId&&s.studentId===student.id);
+  if(already){
+    showResult(false,'⚠️ ส่งแล้ว',student.name+' — ส่งงานนี้ไปแล้ว');
+    return;
+  }
+  var score=document.getElementById('scan-maxscore').value||'';
+  await submitWork(assignId,student,score,'');
+}
+
+async function manualSubmit(){
+  var id=document.getElementById('manual-id').value.trim();
+  if(!id) return;
+  var assignId=document.getElementById('scan-assign').value;
+  if(!assignId){toast('เลือกงานก่อน',true);return;}
+  var student=STUDENTS.find(s=>s.id===id);
+  if(!student){toast('ไม่พบรหัส '+id,true);return;}
+  var already=SUBMISSIONS.find(s=>s.assignId===assignId&&s.studentId===student.id);
+  if(already){toast(student.name+' ส่งงานนี้แล้ว',true);return;}
+  var score=document.getElementById('scan-maxscore').value||'';
+  await submitWork(assignId,student,score,'');
+  document.getElementById('manual-id').value='';
+}
+
+async function submitWork(assignId,student,score,note){
+  var now=new Date();
+  var ts=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+
+         ' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  load('บันทึก...');
+  try{
+    await api({action:'append',sheet:'Submissions',
+      values:JSON.stringify([ts,assignId,student.id,student.name,student.cls,score,note])});
+    SUBMISSIONS.push({ts,assignId,studentId:student.id,name:student.name,cls:student.cls,score,note});
+    var assign=ASSIGNMENTS.find(a=>a.id===assignId);
+    showResult(true,'✅ '+student.name,
+      'ห้อง '+student.cls+(score?' | คะแนน: '+score+(assign&&assign.maxScore?'/'+assign.maxScore:''):''));
+    renderScanHistory();
+    toast('บันทึกงาน '+student.name+' เรียบร้อย');
+  }catch(e){
+    showResult(false,'❌ บันทึกไม่สำเร็จ',e.message);
+  }
+  load('');
+}
+
+function showResult(ok,name,sub){
+  var box=document.getElementById('result-box');
+  box.className='result-box '+(ok?'ok':'err');
+  box.innerHTML=`<div style="font-size:2rem">${ok?'✅':'❌'}</div>
+    <div class="result-name">${name}</div>
+    <div class="result-sub">${sub}</div>`;
+  setTimeout(()=>{
+    box.className='result-box idle';
+    box.innerHTML='<i class="ti ti-qrcode" style="font-size:28px;color:var(--t3)"></i><div style="color:var(--t3);font-size:.88rem">เล็งกล้องไปที่ QR Code ของนักเรียน</div>';
+  },3000);
+}
+
+function renderScanHistory(){
+  var today=new Date().toISOString().substring(0,10);
+  var todaySubs=SUBMISSIONS.filter(s=>s.ts.startsWith(today)).slice().reverse();
+  document.getElementById('scan-count').innerText=todaySubs.length;
+  var html='';
+  if(!todaySubs.length){
+    html='<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:16px">ยังไม่มีการสแกนวันนี้</td></tr>';
+  } else {
+    todaySubs.forEach(s=>{
+      var assign=ASSIGNMENTS.find(a=>a.id===s.assignId);
+      html+=`<tr>
+        <td style="color:var(--t3);font-size:.78rem">${s.ts.substring(11,16)}</td>
+        <td style="font-size:.78rem;color:var(--t3)">${s.studentId}</td>
+        <td><strong>${s.name}</strong></td>
+        <td><span class="badge badge-blue">${s.cls}</span></td>
+        <td>${s.score||'—'}</td>
+        <td style="font-size:.78rem;color:var(--t2)">${assign?assign.title:'—'}</td>
+      </tr>`;
+    });
+  }
+  document.getElementById('scan-history').innerHTML=html;
+}
+
+// ═══════════════════════════════════════
+// REPORT
+// ═══════════════════════════════════════
+function renderReportPage(){
+  var assignId=document.getElementById('rp-assign').value;
+  var cls=document.getElementById('rp-cls').value;
+  if(!assignId){
+    document.getElementById('tb-report').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:24px">เลือกงานก่อน</td></tr>';
+    return;
+  }
+  var assign=ASSIGNMENTS.find(a=>a.id===assignId);
+  var students=STUDENTS.filter(s=>!cls||s.cls===cls);
+  if(assign&&assign.cls&&!cls) students=STUDENTS.filter(s=>s.cls===assign.cls);
+  var subs=SUBMISSIONS.filter(s=>s.assignId===assignId);
+  var subMap={};
+  subs.forEach(s=>subMap[s.studentId]=s);
+  var done=0,missing=0;
+  var html='';
+  students.forEach(s=>{
+    var sub=subMap[s.id];
+    if(sub){done++;}else{missing++;}
+    html+=`<tr>
+      <td style="color:var(--t3);font-size:.78rem">${s.id}</td>
+      <td><strong>${s.name}</strong></td>
+      <td><span class="badge badge-blue">${s.cls}</span></td>
+      <td>${sub?'<span class="badge badge-ok">✅ ส่งแล้ว</span>':'<span class="badge badge-err">❌ ยังไม่ส่ง</span>'}</td>
+      <td>${sub&&sub.score?sub.score+(assign&&assign.maxScore?'/'+assign.maxScore:''):'—'}</td>
+      <td style="color:var(--t3);font-size:.78rem">${sub?sub.ts.substring(0,16):'—'}</td>
+    </tr>`;
+  });
+  var total=students.length;
+  var pct=total?Math.round(done/total*100):0;
+  document.getElementById('rp-total').innerText=total;
+  document.getElementById('rp-done').innerText=done;
+  document.getElementById('rp-missing').innerText=missing;
+  document.getElementById('rp-pct').innerText=pct+'%';
+  document.getElementById('tb-report').innerHTML=html||'<tr><td colspan="6" style="text-align:center;color:var(--t3)">ไม่มีข้อมูล</td></tr>';
+}
+
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+var CURRENT_USER = null;
+
+function handleUserClick(){
+  if(CURRENT_USER) logout();
+  else showLogin();
+}
+
+function showLogin(){
+  document.getElementById('l-user').value='';
+  document.getElementById('l-pass').value='';
+  document.getElementById('l-err').innerText='';
+  document.getElementById('login-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('l-user').focus(),100);
+}
+
+async function doLogin(){
+  var user=document.getElementById('l-user').value.trim();
+  var pass=document.getElementById('l-pass').value;
+  if(!user||!pass){document.getElementById('l-err').innerText='กรอกให้ครบ';return;}
+  document.getElementById('l-err').innerText='⏳ กำลังตรวจสอบ...';
+  var hashHex=await hashPass(pass);
+  try{
+    var r=await api({action:'login',sheet:'Users',values:JSON.stringify([user,hashHex])});
+    if(r.role){
+      CURRENT_USER={username:user,role:r.role};
+      document.getElementById('login-modal').style.display='none';
+      updateAuthUI();
+      applyRoleRestrictions();
+      toast('ยินดีต้อนรับ '+user+' ('+r.role+')');
+    } else {
+      document.getElementById('l-err').innerText='❌ '+(r.msg||'ไม่สำเร็จ');
+    }
+  }catch(e){document.getElementById('l-err').innerText='❌ '+e.message;}
+}
+
+async function hashPass(pass){
+  var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pass));
+  return Array.from(new Uint8Array(buf)).map(b=>('00'+b.toString(16)).slice(-2)).join('');
+}
+
+function logout(){
+  if(!confirm('ออกจากระบบ?'))return;
+  CURRENT_USER=null;
+  updateAuthUI();
+  applyRoleRestrictions();
+  toast('ออกจากระบบแล้ว');
+}
+
+function updateAuthUI(){
+  var av=document.getElementById('user-avatar');
+  var nm=document.getElementById('user-name');
+  if(CURRENT_USER){
+    av.innerText=CURRENT_USER.username.substring(0,2).toUpperCase();
+    av.style.background='var(--p-light)';av.style.color='var(--p)';
+    nm.innerText=CURRENT_USER.username;
+  } else {
+    av.innerText='?';av.style.background='var(--bg)';av.style.color='var(--t3)';
+    nm.innerText='เข้าสู่ระบบ';
+  }
+}
+
+function applyRoleRestrictions(){
+  var role=CURRENT_USER?CURRENT_USER.role:'';
+  var isAdmin=(role==='admin');
+  var isHead=(role==='head');
+  var isTeacher=(role==='teacher');
+  var canManage=isAdmin||isHead||isTeacher;
+
+  // แท็บ "งาน" เห็นเฉพาะคนที่ login แล้ว
+  var tabA=document.getElementById('tab-assignments');
+  if(tabA) tabA.style.display=canManage?'':'none';
+
+  // ถ้าหน้า assignments เปิดอยู่แต่ไม่มีสิทธิ์ ย้ายไปหน้า scan
+  if(!canManage){
+    var assignPage=document.getElementById('assignments');
+    if(assignPage&&assignPage.classList.contains('active')){
+      goPage('scan',document.getElementById('tab-scan'));
+    }
+  }
+
+  // กรองห้องเรียนในรายงานตาม role
+  fillSelectors();
+  renderAssignments();
+}
+
+function getMyClass(){
+  // ดึงห้องของครูจาก TEACHERS object (โหลดจาก Sheet Teachers)
+  if(!CURRENT_USER||!TEACHERS) return null;
+  var uname=CURRENT_USER.username.trim().toLowerCase();
+  for(var cls in TEACHERS){
+    var t=TEACHERS[cls];
+    var name=typeof t==='string'?t:(t&&t.name?t.name:'');
+    if(name.trim().toLowerCase()===uname) return cls;
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function load(t){
+  document.getElementById('loader').style.display=t?'flex':'none';
+  document.getElementById('load-txt').innerText=t||'';
+}
+function toast(msg,err){
+  var d=document.createElement('div');
+  d.className='toast '+(err?'toast-err':'toast-ok');
+  d.innerHTML=(err?'❌':'✅')+' '+msg;
+  document.body.appendChild(d);
+  setTimeout(()=>{d.style.opacity='0';d.style.transition='opacity .4s';setTimeout(()=>d.remove(),400);},2800);
+}
+
+// ═══════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════
+(function(){
+  var c=localStorage.getItem('qr_cfg');
+  if(c){CFG=JSON.parse(c);initApp();}
+  else document.getElementById('setup').style.display='flex';
+})();
+</script>
+</body>
+</html>
