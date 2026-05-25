@@ -354,11 +354,16 @@ canvas.overlay{position:absolute;top:0;left:0}
       <div class="sb-item" onclick="goPage('report',this)" id="nav-report">
         <i class="ti ti-chart-bar"></i><span class="sb-item-label">รายงาน</span>
       </div>
-
       <div class="sb-section" id="sb-sec-system" style="display:none">ระบบ</div>
       <div class="sb-item" onclick="goPage('manage',this)" id="nav-manage" style="display:none">
         <i class="ti ti-settings"></i><span class="sb-item-label">จัดการระบบ</span>
       </div>
+      <!-- ลิงก์ไปหน้าตรวจงาน QR -->
+<div class="sb-section">เครื่องมือ</div>
+<div class="sb-item" onclick="goQRSystem()" id="nav-qr">
+  <i class="ti ti-qrcode"></i>
+  <span class="sb-item-label">ระบบตรวจงาน QR</span>
+</div>
     </div>
 
     <div class="sb-footer">
@@ -3607,6 +3612,11 @@ async function sendReportToLINEById(date, cls) {
     toast('Error: ' + e.message, true);
   }
   load('');
+}
+function goQRSystem() {
+  // เปลี่ยน URL ตรงนี้เป็น URL จริงของไฟล์ qr-assignment.html บน GitHub Pages
+  var url = 'https://anuchatiksuk-hub.github.io/TESTTIK/qr-assignment.html';
+  window.open(url, '_blank');
 }
 </script>
 </body>
